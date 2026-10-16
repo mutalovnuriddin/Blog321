@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-4+)eqaq4+e=lx8xc261$j_*=uamht)q^oid#q@+gi4d9woii-)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['blog321.onrender.com']
 
@@ -59,6 +59,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://blog321.onrender.com",
+]
+
 
 TEMPLATES = [
     {
