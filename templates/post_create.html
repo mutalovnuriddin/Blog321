@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f9ff">
+    <title>{{ post_form_title }} — Sahifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+</head>
+<body class="profile-page">
+    <main class="profile-shell">
+        <header class="profile-topbar">
+            <a class="brand" href="{% url 'home' %}"><span class="brand-mark">s.</span><span>sahifa</span></a>
+            <nav class="profile-nav" aria-label="Asosiy navigatsiya">
+                <a href="{% url 'home' %}">Yangiliklar</a>
+                <a href="{% url 'profile' %}">Profilim</a>
+            </nav>
+        </header>
+
+        <section class="post-create-main" aria-labelledby="new-post-title">
+            <a class="post-create-back" href="{{ post_form_back_url }}">← {{ post_form_back_label }}</a>
+            <section class="create-post-card" aria-labelledby="new-post-title">
+                <div class="create-post-heading">
+                    <div>
+                        <span class="eyebrow">HAMJAMIYAT BILAN BO‘LISHING</span>
+                        <h1 id="new-post-title">{{ post_form_title }}</h1>
+                        <p>{{ post_form_intro }}</p>
+                    </div>
+                    <span class="create-post-icon" aria-hidden="true">✎</span>
+                </div>
+                <form class="create-post-form" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if post_form.non_field_errors %}<div class="form-errors" role="alert">{{ post_form.non_field_errors }}</div>{% endif %}
+                    {% for field in post_form %}
+                        <div class="create-post-field{% if field.errors %} field-invalid{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="create-post-submit" type="submit">{{ post_form_action }} <span aria-hidden="true">↗</span></button>
+                </form>
+            </section>
+        </section>
+
+        <footer class="profile-footer"><span>© 2026 Sahifa</span><span>So‘zlaringizga joy bor.</span></footer>
+    </main>
+</body>
+</html>

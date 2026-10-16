@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f9ff">
+    <title>Yangiliklar — Sahifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+</head>
+<body>
+    <main class="feed-shell">
+        <header class="feed-topbar">
+            <a class="brand" href="{% url 'home' %}" aria-label="Sahifa yangiliklari">
+                <span class="brand-mark">s.</span><span>sahifa</span>
+            </a>
+            <div class="header-search-wrap">
+                <form class="header-search" method="get" action="{% url 'home' %}" role="search">
+                    <label class="visually-hidden" for="header-people-search">Foydalanuvchini qidirish</label>
+                    <span aria-hidden="true">⌕</span>
+                    <input id="header-people-search" type="search" name="q" value="{{ user_search_query }}" placeholder="Odamlarni qidirish" maxlength="100" autocomplete="off">
+                    <button type="submit">Qidirish</button>
+                </form>
+                {% if user_search_active %}<a class="header-search-clear" href="{% url 'home' %}">Qidiruvni tozalash</a>{% endif %}
+            </div>
+            <nav class="feed-nav" aria-label="Asosiy navigatsiya">
+                <a class="nav-current" href="{% url 'home' %}"><span aria-hidden="true">⌂</span> Yangiliklar</a>
+                {% if user.is_authenticated %}
+                    <a class="profile-link" href="{% url 'profile' %}">
+                        <img src="{% if user.avatar and user.avatar.name != 'avatars/user.png' %}{{ user.avatar.url }}{% else %}{% static 'images/avatar-default.svg' %}{% endif %}" alt="">
+                        Profilim
+                    </a>
+                {% else %}
+                    <a class="profile-link" href="{% url 'login' %}">Kirish <span aria-hidden="true">↗</span></a>
+                {% endif %}
+            </nav>
+        </header>
+
+        <section class="feed-main" aria-labelledby="feed-title">
+            <div class="feed-intro">
+                <div>
+                    <span class="eyebrow">HAMJAMIYATDAN HIKOYALAR</span>
+                    <h1 id="feed-title">Yangiliklar <span aria-hidden="true">✳</span></h1>
+                    <p>Odamlar, fikrlar va ilhom ulashiladigan sahifa.</p>
+                </div>
+                <span class="live-mark"><span></span> Jonli hamjamiyat</span>
+            </div>
+
+            <div class="feed-layout">
+                <section class="posts-column" aria-label="Foydalanuvchilar postlari">
+                    <div class="section-heading">
+                        <div><span class="eyebrow">SO‘NGGI ULASHUVLAR</span><h2>Hamjamiyatdan</h2></div>
+                        <span class="post-count">{{ posts|length }} ta post</span>
+                    </div>
+                    {% for post in posts %}
+                        {% include "partials/post_card.html" %}
+                    {% empty %}
+                        <div class="empty-state">
+                            <span class="empty-icon" aria-hidden="true">✳</span>
+                            <h3>Hali postlar yo‘q</h3>
+                            <p>Hamjamiyatda birinchi bo‘lib fikringizni ulashing.</p>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'post_create' %}">Post yaratish <span aria-hidden="true">↗</span></a>
+                            {% else %}
+                                <a href="{% url 'register' %}">Hisob yaratish <span aria-hidden="true">↗</span></a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </section>
+
+                <aside class="feed-aside">
+                    {% if user.is_authenticated %}
+                        <div class="aside-card compose-card">
+                            <span class="eyebrow">SIZNING NAVBATINGIZ</span>
+                            <h2>Bir fikr ulashing.</h2>
+                            <p>Yangi hikoyangizni hamjamiyatga qo‘shing.</p>
+                            <a class="aside-button" href="{% url 'post_create' %}">Post yozish <span>↗</span></a>
+                        </div>
+                    {% else %}
+                        <div class="aside-card compose-card">
+                            <span class="eyebrow">HAMJAMIYATGA QO‘SHILING</span>
+                            <h2>Fikringizga joy bor.</h2>
+                            <p>Postlarga munosabat bildiring va yangi insonlarni kuzating.</p>
+                            <a class="aside-button" href="{% url 'register' %}">Hisob yaratish <span>↗</span></a>
+                        </div>
+                    {% endif %}
+
+                    <div class="aside-card people-card">
+                        <div class="people-heading"><div><span class="eyebrow">YANGI OVOZLAR</span><h2>Odamlar</h2></div><span aria-hidden="true">✦</span></div>
+                        {% if user_search_active %}
+                            <p class="people-search-summary">“{{ user_search_query }}” bo‘yicha {{ suggested_users|length }} ta natija</p>
+                        {% endif %}
+                        {% for suggested in suggested_users %}
+                            <div class="suggested-user">
+                                <a href="{% url 'public_profile' suggested.pk %}" class="suggested-link">
+                                    <img src="{{ suggested.avatar_url }}" alt="" class="suggested-avatar">
+                                    <span><strong>{{ suggested.get_full_name|default:suggested.username }}</strong><small>@{{ suggested.username }}</small></span>
+                                </a>
+                                {% if user.is_authenticated and suggested.pk != user.pk %}
+                                    <form method="post" action="{% url 'follow_toggle' suggested.pk %}" data-follow-form>
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button class="follow-mini{% if suggested.is_following %} is-following{% endif %}" type="submit" data-follow-button aria-pressed="{{ suggested.is_following|yesno:'true,false' }}" aria-label="{% if suggested.is_following %}Kuzatishni bekor qilish{% else %}Kuzatish{% endif %}">{% if suggested.is_following %}✓{% else %}+{% endif %}</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            {% if user_search_active %}
+                                <p class="aside-muted">Bu so‘rov bo‘yicha foydalanuvchi topilmadi.</p>
+                            {% else %}
+                                <p class="aside-muted">Hozircha tavsiya yo‘q.</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="aside-note">Yaxshi fikrlar bo‘lishilganda yanada ko‘payadi.</p>
+                </aside>
+            </div>
+        </section>
+        <footer class="feed-footer"><span>© 2026 Sahifa</span><span>So‘zlaringizga joy bor.</span></footer>
+    </main>
+    {% csrf_token %}
+    {% include "partials/post_delete_modal.html" %}
+    <script src="{% static 'js/social.js' %}" defer></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+{% load socialaccount %}
+
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f9ff">
+    <title>Kirish — Sahifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+</head>
+
+<body>
+    <main class="auth-shell">
+        <section class="auth-card" aria-labelledby="auth-title">
+            <aside class="auth-art" aria-label="Sahifa blogi haqida">
+                <a class="brand brand-light" href="{% url 'login' %}" aria-label="Sahifa bosh sahifasi">
+                    <span class="brand-mark">s.</span>
+                    <span>sahifa</span>
+                </a>
+                <div class="art-copy">
+                    <span class="eyebrow">O‘Z FIKRINGIZNI ULASHING</span>
+                    <h2>Har bir hikoya<br>bir sahifadan<br>boshlanadi.</h2>
+                    <p>O‘qing, yozing va o‘zingizga yaqin insonlarni toping.</p>
+                </div>
+                <div class="art-decoration" aria-hidden="true">
+                    <span class="art-orbit orbit-one"></span>
+                    <span class="art-orbit orbit-two"></span>
+                    <span class="art-spark">✳</span>
+                    <span class="art-note">#bugungi_fikr</span>
+                </div>
+                <span class="art-footer">Fikrlaringiz uchun yangi makon.</span>
+            </aside>
+
+            <div class="auth-content">
+                <div class="mobile-brand">
+                    <a class="brand" href="{% url 'login' %}">
+                        <span class="brand-mark">s.</span>
+                        <span>sahifa</span>
+                    </a>
+                </div>
+                <div class="auth-heading">
+                    <span class="eyebrow">QAYTGANINGIZDAN XURSANDMIZ</span>
+                    <h1 id="auth-title">Hisobingizga kiring</h1>
+                    <p>Davom etish uchun ma’lumotlaringizni kiriting.</p>
+                </div>
+
+                <form class="auth-form" method="post" action="{% url 'login' %}" novalidate>
+                    {% csrf_token %}
+                    {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+                    {% if form.non_field_errors %}
+                    <div class="form-alert" role="alert">
+                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    </div>
+                    {% endif %}
+                    {% for field in form %}
+                    <div class="field{% if field.errors %} field-invalid{% endif %}">
+                        <div class="field-heading">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        </div>
+                        <div class="input-wrap">
+                            {{ field }}
+                            {% if field.name == 'password' %}
+                            <button class="password-toggle" type="button" data-password-toggle
+                                aria-label="Parolni ko‘rsatish">Ko‘rsatish</button>
+                            {% endif %}
+                        </div>
+                        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    {% endfor %}
+                    <button class="submit-button" type="submit">
+                        <span>Kirish</span>
+                        <span class="button-arrow" aria-hidden="true">↗</span>
+                    </button>
+                </form>
+                <a href="{% provider_login_url 'google'  %}">
+                    <button class="submit-button" type="submit">
+                        <span>Google bilan Kirish</span>
+                        <span class="button-arrow" aria-hidden="true">↗</span>
+                    </button>
+                </a>
+
+                <p class="auth-switch">Hisobingiz yo‘qmi? <a href="{% url 'register' %}">Ro‘yxatdan o‘ting <span
+                            aria-hidden="true">→</span></a></p>
+                <p class="auth-legal">Davom etish orqali <a href="#terms">foydalanish shartlari</a>ga rozilik
+                    bildirasiz.</p>
+            </div>
+        </section>
+        <footer class="page-footer"><span>© 2026 Sahifa</span><span>So‘zlaringizga joy bor.</span></footer>
+    </main>
+    <script src="{% static 'js/auth.js' %}" defer></script>
+</body>
+
+</html>

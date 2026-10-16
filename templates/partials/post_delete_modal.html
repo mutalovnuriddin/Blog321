@@ -1,0 +1,15 @@
+<div class="post-delete-modal" data-post-delete-modal hidden>
+    <button class="post-delete-backdrop" type="button" data-post-delete-cancel aria-label="Oynani yopish"></button>
+    <section class="post-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="post-delete-title" aria-describedby="post-delete-description">
+        <span class="post-delete-icon" aria-hidden="true">!</span>
+        <h2 id="post-delete-title">Postni o‘chirmoqchimisiz?</h2>
+        <p id="post-delete-description" data-post-delete-description>Bu amalni bekor qilib bo‘lmaydi. Post butunlay o‘chiriladi.</p>
+        <form method="post" action="{% url 'home' %}" data-post-delete-form>
+            {% csrf_token %}
+            <div class="post-delete-actions">
+                <button class="post-delete-cancel" type="button" data-post-delete-cancel>Bekor qilish</button>
+                <button class="post-delete-confirm" type="submit">Ha, o‘chirish</button>
+            </div>
+        </form>
+    </section>
+</div>

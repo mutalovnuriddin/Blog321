@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f9ff">
+    <title>{{ post.title|default:post.author.username }} — Sahifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+</head>
+<body>
+    <main class="feed-shell">
+        <header class="feed-topbar">
+            <a class="brand" href="{% url 'home' %}"><span class="brand-mark">s.</span><span>sahifa</span></a>
+            <nav class="feed-nav" aria-label="Asosiy navigatsiya">
+                <a href="{% url 'home' %}">Yangiliklar</a>
+                {% if user.is_authenticated %}<a class="profile-link" href="{% url 'profile' %}">Profilim</a>{% else %}<a class="profile-link" href="{% url 'login' %}">Kirish</a>{% endif %}
+            </nav>
+        </header>
+        <section class="post-detail-main">
+            <a class="back-to-feed" href="{% url 'home' %}">← Yangiliklarga qaytish</a>
+            {% include "partials/post_card.html" %}
+        </section>
+        <footer class="feed-footer"><span>© 2026 Sahifa</span><span>So‘zlaringizga joy bor.</span></footer>
+    </main>
+    {% include "partials/post_delete_modal.html" %}
+    <div class="toast" data-toast role="status" aria-live="polite"></div>
+    <script src="{% static 'js/social.js' %}" defer></script>
+</body>
+</html>

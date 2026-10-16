@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f9ff">
+    <title>Profil — Sahifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+</head>
+<body class="profile-page">
+    <main class="profile-shell">
+        <header class="profile-topbar">
+            <a class="brand" href="{% url 'home' %}"><span class="brand-mark">s.</span><span>sahifa</span></a>
+            <nav class="profile-nav" aria-label="Profil navigatsiyasi">
+                <a href="{% url 'home' %}">Yangiliklar</a>
+                <a href="{% url 'edit_profile' %}">Tahrirlash <span aria-hidden="true">↗</span></a>
+                <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Chiqish</button></form>
+            </nav>
+        </header>
+
+        {% if messages %}
+            <div class="profile-messages" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>
+        {% endif %}
+
+        <section class="profile-main" aria-labelledby="profile-name">
+            <div class="profile-hero">
+                <img class="profile-hero-avatar" src="{{ profile_avatar }}" alt="{{ profile_user.username }} avatari" referrerpolicy="no-referrer">
+                <div class="profile-identity">
+                    <div class="profile-name-row">
+                        <h1 id="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                        <span class="online-dot{% if not is_online %} is-offline{% endif %}" title="{% if is_online %}Hozir online{% else %}Offline{% endif %}"></span>
+                    </div>
+                    <p class="profile-handle">@{{ profile_user.username }}</p>
+                    {% if profile_user.bio %}<p class="profile-bio">{{ profile_user.bio|linebreaksbr }}</p>{% else %}<p class="profile-bio profile-bio-muted">O‘z hikoyasini yozayotgan Sahifa a’zosi.</p>{% endif %}
+                    <div class="profile-stats" aria-label="Profil statistikasi">
+                        <span><strong>{{ posts_count }}</strong> post</span>
+                        <button class="profile-stat-button" type="button" data-connections-url="{% url 'profile_connections' profile_user.pk 'followers' %}" data-connections-title="Kuzatuvchilar">
+                            <strong data-followers-count>{{ followers_count }}</strong> kuzatuvchi
+                        </button>
+                        <button class="profile-stat-button" type="button" data-connections-url="{% url 'profile_connections' profile_user.pk 'following' %}" data-connections-title="Kuzatayotganlar">
+                            <strong>{{ following_count }}</strong> kuzatmoqda
+                        </button>
+                    </div>
+                    <div class="profile-facts">
+                        <span>{{ profile_user.email|default:"Email ko‘rsatilmagan" }}</span>
+                        {% if profile_user.phone_number %}<span>{{ profile_user.phone_number }}</span>{% endif %}
+                        <span>{{ profile_user.date_joined|date:"d.m.Y" }} dan beri</span>
+                    </div>
+                    <div class="profile-actions">
+                        <a class="profile-edit-action" href="{% url 'post_create' %}">Post qo‘shish <span aria-hidden="true">＋</span></a>
+                        <a class="profile-edit-action" href="{% url 'edit_profile' %}">Profilni tahrirlash <span aria-hidden="true">↗</span></a>
+                        <a class="profile-edit-action" href="{% url 'chat_inbox' %}">Chatlar <span aria-hidden="true">↗</span></a>
+                        <button class="share-profile" type="button" data-copy-link="{{ request.build_absolute_uri }}">Havolani nusxalash</button>
+                    </div>
+                </div>
+                <div class="profile-decoration" aria-hidden="true"><span>✳</span><i></i></div>
+            </div>
+
+            <section class="profile-posts" aria-labelledby="posts-title">
+                <div class="profile-section-heading">
+                    <div><span class="eyebrow">SIZNING ULASHUVLARINGIZ</span><h2 id="posts-title">Postlar <span>{{ posts_count }}</span></h2></div>
+                    <span class="grid-mark" aria-hidden="true">▦</span>
+                </div>
+                <div class="profile-post-grid">
+                    {% for post in user_posts %}
+                        <a class="profile-post-tile" href="{% url 'post_detail' post.pk %}">
+                            {% if post.img %}<img src="{{ post.img.url }}" alt="{{ post.title|default:'Post rasmi' }}" loading="lazy">
+                            {% elif post.video %}<div class="tile-placeholder tile-video"><span>▶</span><p>{{ post.title|default:post.desc|truncatechars:90 }}</p></div>
+                            {% else %}<div class="tile-placeholder"><span>“</span><p>{{ post.title|default:post.desc|truncatechars:110 }}</p></div>{% endif %}
+                            <span class="tile-overlay"><span>♡ {{ post.likes_count }}</span><span>▢ {{ post.comments_count }}</span></span>
+                        </a>
+                    {% empty %}
+                        <div class="profile-posts-empty"><span aria-hidden="true">✳</span><h3>Hali post yo‘q</h3><p>Birinchi postni ulashing — u shu yerda ko‘rinadi.</p></div>
+                    {% endfor %}
+                </div>
+            </section>
+        </section>
+        <footer class="profile-footer"><span>© 2026 Sahifa</span><span>So‘zlaringizga joy bor.</span></footer>
+    </main>
+    <div class="toast" data-toast role="status" aria-live="polite"></div>
+    {% include "partials/connections_modal.html" %}
+    <script src="{% static 'js/social.js' %}" defer></script>
+</body>
+</html>

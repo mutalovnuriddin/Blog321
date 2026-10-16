@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f9ff">
+    <title>Profilni tahrirlash — Sahifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/profile-edit.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+</head>
+<body>
+    <main class="edit-shell">
+        <header class="topbar">
+            <a class="brand" href="{% url 'profile' %}" aria-label="Profil sahifasiga qaytish">
+                <span class="brand-mark">s.</span>
+                <span>sahifa</span>
+            </a>
+            <a class="back-link" href="{% url 'profile' %}"><span aria-hidden="true">←</span> Profilga qaytish</a>
+        </header>
+
+        <section class="edit-main" aria-labelledby="page-title">
+            <div class="page-intro">
+                <span class="eyebrow">SHAXSIY SAHIFANGIZ</span>
+                <h1 id="page-title">Profilni tahrirlash</h1>
+                <p>Ma’lumotlaringiz va parolingizni alohida yangilang.</p>
+            </div>
+
+            {% if messages %}
+                <div class="messages" role="status">
+                    {% for message in messages %}
+                        <p class="message {{ message.tags }}">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="edit-grid">
+                <section class="edit-card" aria-labelledby="profile-form-title">
+                    <div class="card-heading">
+                        <span class="card-icon" aria-hidden="true">✎</span>
+                        <div>
+                            <span class="eyebrow">ASOSIY MA’LUMOTLAR</span>
+                            <h2 id="profile-form-title">Shaxsiy ma’lumotlar</h2>
+                            <p>Profilingizda ko‘rinadigan ma’lumotlarni yangilang.</p>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data" class="edit-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="profile">
+
+                        {% if profile_form.non_field_errors %}
+                            <div class="form-alert" role="alert">
+                                {% for error in profile_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% for field in profile_form %}
+                            <div class="field{% if field.errors %} field-invalid{% endif %}">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {% if field.name == 'avatar' %}
+                                    {% if user.avatar %}
+                                        <div class="current-avatar">
+                                            <img src="{{ user.avatar.url }}" alt="Joriy profil rasmi">
+                                            <span>Joriy rasm</span>
+                                        </div>
+                                    {% endif %}
+                                    {{ field }}
+                                    <span class="field-help">Yangi rasm yuklash uchun faylni tanlang.</span>
+                                {% else %}
+                                    {{ field }}
+                                {% endif %}
+                                {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                                {% if field.name == 'bio' %}<span class="field-help">O‘zingiz haqingizda qisqacha yozing.</span>{% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button class="submit-button" type="submit">
+                            <span>Ma’lumotlarni saqlash</span>
+                            <span aria-hidden="true">↗</span>
+                        </button>
+                    </form>
+                </section>
+
+                <section class="edit-card password-card" aria-labelledby="password-form-title">
+                    <div class="card-heading">
+                        <span class="card-icon card-icon-lock" aria-hidden="true">⌑</span>
+                        <div>
+                            <span class="eyebrow">HIMOYA</span>
+                            <h2 id="password-form-title">{{ password_form_title }}</h2>
+                            <p>Parol yangilanishi profil ma’lumotlariga ta’sir qilmaydi.</p>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'edit_profile' %}" class="edit-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="password">
+
+                        {% if password_form.non_field_errors %}
+                            <div class="form-alert" role="alert">
+                                {% for error in password_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% for field in password_form %}
+                            <div class="field{% if field.errors %} field-invalid{% endif %}">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                <div class="password-input-wrap">
+                                    {{ field }}
+                                    <button class="password-toggle" type="button" data-password-toggle aria-label="Parolni ko‘rsatish">Ko‘rsatish</button>
+                                </div>
+                                {% if field.help_text %}<div class="field-help">{{ field.help_text|safe }}</div>{% endif %}
+                                {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endfor %}
+
+                        <button class="submit-button submit-button-secondary" type="submit">
+                            <span>Parolni yangilash</span>
+                            <span aria-hidden="true">↗</span>
+                        </button>
+                    </form>
+                    <p class="security-note"><span aria-hidden="true">●</span> Joriy sessiyangiz saqlanib qoladi.</p>
+                </section>
+            </div>
+        </section>
+
+        <footer class="site-footer">
+            <span>© 2026 Sahifa</span>
+            <span>So‘zlaringizga joy bor.</span>
+        </footer>
+    </main>
+    <script src="{% static 'js/auth.js' %}" defer></script>
+</body>
+</html>
