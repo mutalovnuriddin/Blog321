@@ -48,6 +48,7 @@
         const item = document.createElement('article');
         item.className = 'comment-item';
         item.dataset.commentId = commentData.id;
+        item.id = `comment-${commentData.id}`;
 
         const avatarLink = document.createElement('a');
         avatarLink.className = 'comment-avatar-link';
@@ -287,6 +288,33 @@
                 .setAttribute('aria-expanded', 'false');
         });
     });
+
+    // Notification'dan kelgan `#comment-<id>` hash'i:
+    // izohlarni ochamiz va aynan o'sha izohga scroll qilib, ta'kidlaymiz.
+    async function focusCommentFromHash() {
+        const match = /^#comment-([0-9a-fA-F-]{36})$/.exec(window.location.hash);
+        if (!match) return;
+        const [, commentId] = match;
+        const card = document.querySelector('[data-post-card]');
+        const list = card?.querySelector('[data-comments-list]');
+        if (!card || !list) return;
+
+        list.hidden = false;
+        card.querySelector('[data-comments-toggle]')
+            ?.setAttribute('aria-expanded', 'true');
+        try {
+            await loadComments(card);
+        } catch {
+            return;
+        }
+        const item = list.querySelector(`[data-comment-id="${commentId}"]`);
+        if (!item) return;
+        item.classList.add('is-comment-highlighted');
+        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.setTimeout(() => item.classList.remove('is-comment-highlighted'), 6000);
+    }
+
+    focusCommentFromHash();
 
     const connectionsModal = document.querySelector('[data-connections-modal]');
     if (connectionsModal) {

@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from .consumers import NotificationConsumer
 from .models import Notification, Post, Profile
+from .notifications import serialize_notification
 
 
 class NotificationFlowTest(TransactionTestCase):
@@ -157,6 +158,26 @@ class NotificationFlowTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['unread_count'], 0)
+
+    def test_comment_notification_url_targets_exact_comment(self):
+        self.bob_client.post(
+            f'/post/{self.post.id}/comment/',
+            {'text': 'Aynan shu izoh'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        notification = self.alice.received_notifications.filter(
+            verb=Notification.Verb.COMMENT,
+        ).first()
+        self.assertIsNotNone(notification.comment)
+        expected = (
+            f'{reverse("post_detail", args=[self.post.id])}'
+            f'#comment-{notification.comment_id}'
+        )
+        self.assertEqual(serialize_notification(notification)['url'], expected)
+
+        # API ham aynan shu URL'ni qaytarishi kerak
+        data = self.alice_client.get(reverse('notifications_data')).json()
+        self.assertEqual(data['notifications'][0]['url'], expected)
 
     def test_notifications_apis_require_authentication(self):
         self.assertEqual(

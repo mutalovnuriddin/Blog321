@@ -66,11 +66,6 @@
         }, 4200);
     }
 
-    function markReadUrl(id) {
-        return id ? window.NOTIFICATIONS_READ_URL + '?id=' + encodeURIComponent(id)
-                  : window.NOTIFICATIONS_READ_URL;
-    }
-
     function markRead(id) {
         const body = new URLSearchParams();
         if (id) body.append('id', id);

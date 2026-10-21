@@ -517,6 +517,7 @@ def add_comment_page(request, post_id):
             actor=request.user,
             verb='comment',
             post=post,
+            comment=comment,
             preview=comment.text,
         )
         if _is_ajax_request(request):

@@ -30,7 +30,13 @@ def _actor_avatar_url(actor):
 def _target_url(notification):
     if notification.verb == Notification.Verb.MESSAGE:
         return reverse('chat_conversation', args=[notification.conversation_id])
-    if notification.verb in (Notification.Verb.LIKE, Notification.Verb.COMMENT):
+    if notification.verb == Notification.Verb.COMMENT:
+        url = reverse('post_detail', args=[notification.post_id])
+        if notification.comment_id:
+            # Aynan o'sha izohga scroll qilish uchun hash
+            return f'{url}#comment-{notification.comment_id}'
+        return url
+    if notification.verb == Notification.Verb.LIKE:
         return reverse('post_detail', args=[notification.post_id])
     return reverse('public_profile', args=[notification.actor_id])
 
@@ -93,7 +99,7 @@ def push_notification(recipient, notification):
     return payload
 
 
-def create_notification(*, recipient, actor, verb, post=None,
+def create_notification(*, recipient, actor, verb, post=None, comment=None,
                        conversation=None, preview='', push=True):
     """Yangi notification yozadi va (kerak bo'lsa) recipient'ga jonli uzatadi."""
     if actor.pk == recipient.pk:
@@ -119,6 +125,7 @@ def create_notification(*, recipient, actor, verb, post=None,
         actor=actor,
         verb=verb,
         post=post,
+        comment=comment,
         conversation=conversation,
         preview=preview[:160],
     )

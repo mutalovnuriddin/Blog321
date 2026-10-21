@@ -81,6 +81,13 @@ class Notification(BaseModel):
         blank=True,
         related_name='notifications',
     )
+    comment = models.ForeignKey(
+        'Comment',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notifications',
+    )
     conversation = models.ForeignKey(
         'Conversation',
         on_delete=models.CASCADE,
