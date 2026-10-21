@@ -6,6 +6,8 @@ from .views import (
     like_post_page,
     login_page,
     logout_page,
+    notifications_data_page,
+    notifications_read_page,
     post_detail_page,
     post_comments_page,
     post_create_view,
@@ -42,6 +44,8 @@ urlpatterns = [
     path('user/<uuid:user_id>/follow/', follow_toggle_page, name='follow_toggle'),
     path('user/<uuid:user_id>/connections/<str:connection_type>/', profile_connections_page, name='profile_connections'),
     path('user/<uuid:user_id>/', public_profile_page, name='public_profile'),
+    path('notifications/', notifications_data_page, name='notifications_data'),
+    path('notifications/read/', notifications_read_page, name='notifications_read'),
     path('messages/', chat_inbox_page, name='chat_inbox'),
     path('messsages/', chat_inbox_page, name='chat_inbox_legacy'),
     path('messages/start/<uuid:user_id>/', start_chat_page, name='start_chat'),
@@ -50,5 +54,3 @@ urlpatterns = [
     path('messages/<uuid:conversation_id>/upload/', chat_media_upload_page, name='chat_media_upload'),
 ]
 
-
-"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"

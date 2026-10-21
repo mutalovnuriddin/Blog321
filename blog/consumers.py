@@ -6,7 +6,8 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Conversation, DirectMessage
+from .models import Conversation, DirectMessage, Notification
+from .notifications import create_notification, notify_group_name
 from .views import _avatar_url_for_user
 
 
@@ -127,10 +128,25 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return
 
         message = await self.save_message(text.strip())
+        await self.send_message_notification(message)
         await self.channel_layer.group_send(self.group_name, {
             'type': 'message_created',
             'message': message,
         })
+
+    @database_sync_to_async
+    def send_message_notification(self, message):
+        # Agar suhbatdosh shu suhbatni ochib turgan bo'lsa (presence > 0),
+        # alohida notification yubormaymiz — u xabarni ko'rib turibdi.
+        if cache.get(f'chat:presence:{self.peer.pk}', 0) > 0:
+            return
+        create_notification(
+            recipient=self.peer,
+            actor=self.user,
+            verb=Notification.Verb.MESSAGE,
+            conversation=self.conversation,
+            preview=message.get('text', ''),
+        )
 
     async def message_created(self, event):
         message = event['message']
@@ -319,3 +335,52 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         else:
             cache.delete(key)
         return updated > 0
+
+
+class NotificationConsumer(AsyncJsonWebsocketConsumer):
+    """Foydalanuvchining shaxsiy bildirishnomalar kanali.
+
+    Like, izoh, kuzatish va yangi shaxsiy xabarlar real-time Yetib boradi:
+    guruhga yuborilgan har bir xabar shu yerdan foydalanuvchiga uzatiladi.
+    """
+
+    async def connect(self):
+        self.user = self.scope['user']
+        if not self.user.is_authenticated:
+            await self.close(code=4401)
+            return
+        self.group_name = notify_group_name(self.user.pk)
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        unread_count = await self.get_unread_count()
+        await self.send_json({
+            'type': 'unread_count',
+            'count': unread_count,
+        })
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(
+                self.group_name,
+                self.channel_name,
+            )
+
+    async def new_notification(self, event):
+        await self.send_json({
+            'type': 'new_notification',
+            'notification': event['notification'],
+            'unread_count': event['unread_count'],
+        })
+
+    async def unread_count_refreshed(self, event):
+        await self.send_json({
+            'type': 'unread_count',
+            'count': event['count'],
+        })
+
+    @database_sync_to_async
+    def get_unread_count(self):
+        return Notification.objects.filter(
+            recipient=self.user,
+            is_read=False,
+        ).count()

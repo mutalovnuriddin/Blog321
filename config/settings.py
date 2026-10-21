@@ -185,14 +185,8 @@ AUTH_USER_MODEL = 'blog.Profile'
 
 
 SITE_ID = 1
-
-from django.contrib.sites.models import Site
-try:
-    # Sayt yoqilganda avtomatik ravishda domeyni to'g'rilab qo'yadi
-    Site.objects.update_or_create(id=1, defaults={'domain': 'blog321.onrender.com', 'name': 'blog321.onrender.com'})
-except Exception:
-    pass
-
+# Sayt yoqilganda avtomatik ravishda domeyni to'g'rilash 'blog/apps.py'
+# dagi post_migrate (BlogConfig.sync_site_domain) hook orqali bajariladi.
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {

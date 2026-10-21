@@ -28,7 +28,12 @@ from .forms import (
     PostCreatedForm,
     CommentForm
 )
-from .models import Comment, Post, Profile, Conversation, DirectMessage
+from .models import Comment, Post, Profile, Conversation, DirectMessage, Notification
+from .notifications import (
+    create_notification,
+    notify_group_name,
+    serialize_notification,
+)
 
 # Create your views here.
 
@@ -473,9 +478,21 @@ def like_post_page(request, post_id):
     if post.likes.filter(pk=request.user.pk).exists():
         post.likes.remove(request.user)
         is_liked = False
+        Notification.objects.filter(
+            recipient=post.author,
+            actor=request.user,
+            verb=Notification.Verb.LIKE,
+            post=post,
+        ).delete()
     else:
         post.likes.add(request.user)
         is_liked = True
+        create_notification(
+            recipient=post.author,
+            actor=request.user,
+            verb='like',
+            post=post,
+        )
     if _is_ajax_request(request):
         return JsonResponse({
             'liked': is_liked,
@@ -495,6 +512,13 @@ def add_comment_page(request, post_id):
         comment.author = request.user
         comment.post = post
         comment.save()
+        create_notification(
+            recipient=post.author,
+            actor=request.user,
+            verb='comment',
+            post=post,
+            preview=comment.text,
+        )
         if _is_ajax_request(request):
             return JsonResponse({
                 'comment': {
@@ -603,6 +627,11 @@ def follow_toggle_page(request, user_id):
         else:
             request.user.following.add(target_user)
             is_following = True
+            create_notification(
+                recipient=target_user,
+                actor=request.user,
+                verb='follow',
+            )
     else:
         is_following = False
 
@@ -612,6 +641,102 @@ def follow_toggle_page(request, user_id):
             'followers_count': Profile.objects.filter(following=target_user).count(),
         })
     return _redirect_after_action(request)
+
+
+@login_required
+def notifications_data_page(request):
+    """🔔 Dropdown uchun oxirgi bildirishnomalar va o'qilmaganlar soni."""
+    notifications = list(
+        request.user.received_notifications.select_related(
+            'actor',
+            'post',
+            'conversation',
+        )[:30]
+    )
+    return JsonResponse({
+        'unread_count': request.user.received_notifications.filter(
+            is_read=False,
+        ).count(),
+        'notifications': [
+            serialize_notification(notification)
+            for notification in notifications
+        ],
+    })
+
+
+@login_required
+@require_POST
+def notifications_read_page(request):
+    """Bildirishnomalarni o'qilgan deb belgilaydi:
+    id yuborilsa — bittasini, aks holda hammasini."""
+    notification_id = request.POST.get('id', '').strip()
+    queryset = request.user.received_notifications.filter(is_read=False)
+    if notification_id:
+        queryset = queryset.filter(pk=notification_id)
+    queryset.update(is_read=True)
+
+    unread_count = request.user.received_notifications.filter(
+        is_read=False,
+    ).count()
+
+    channel_layer = get_channel_layer()
+    if channel_layer is not None:
+        async_to_sync(channel_layer.group_send)(
+            notify_group_name(request.user.pk),
+            {
+                'type': 'unread_count_refreshed',
+                'count': unread_count,
+            },
+        )
+    return JsonResponse({'unread_count': unread_count})
+
+
+@login_required
+def notifications_data_page(request):
+    """🔔 Dropdown uchun oxirgi bildirishnomalar va o'qilmaganlar soni."""
+    notifications = list(
+        request.user.received_notifications.select_related(
+            'actor',
+            'post',
+            'conversation',
+        )[:30]
+    )
+    return JsonResponse({
+        'unread_count': request.user.received_notifications.filter(
+            is_read=False,
+        ).count(),
+        'notifications': [
+            serialize_notification(notification)
+            for notification in notifications
+        ],
+    })
+
+
+@login_required
+@require_POST
+def notifications_read_page(request):
+    """Bildirishnomalarni o'qilgan deb belgilaydi:
+    id yuborilsa — bittasini, aks holda hammasini."""
+    notification_id = request.POST.get('id', '').strip()
+    queryset = request.user.received_notifications.filter(is_read=False)
+    if notification_id:
+        queryset = queryset.filter(pk=notification_id)
+    queryset.update(is_read=True)
+
+    unread_count = request.user.received_notifications.filter(
+        is_read=False,
+    ).count()
+
+    channel_layer = get_channel_layer()
+    if channel_layer is not None:
+        async_to_sync(channel_layer.group_send)(
+            notify_group_name(request.user.pk),
+            {
+                'type': 'unread_count_refreshed',
+                'count': unread_count,
+            },
+        )
+    return JsonResponse({'unread_count': unread_count})
 
 
 @login_required

@@ -56,6 +56,51 @@ class Comment(BaseModel):
 
 
 
+class Notification(BaseModel):
+    class Verb(models.TextChoices):
+        LIKE = 'like', 'Like'
+        COMMENT = 'comment', 'Izoh'
+        FOLLOW = 'follow', 'Kuzatish'
+        MESSAGE = 'message', 'Xabar'
+
+    recipient = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name='received_notifications',
+    )
+    actor = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name='sent_notifications',
+    )
+    verb = models.CharField(max_length=10, choices=Verb.choices)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notifications',
+    )
+    conversation = models.ForeignKey(
+        'Conversation',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notifications',
+    )
+    preview = models.CharField(max_length=160, blank=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', 'is_read', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.actor.username} → {self.recipient.username}: {self.verb}"
+
+
 class Conversation(BaseModel):
     participant_a = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='conversations_as_a')
     participant_b = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='conversations_as_b')
